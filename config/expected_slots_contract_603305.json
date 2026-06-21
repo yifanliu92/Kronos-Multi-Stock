@@ -1,0 +1,23 @@
+{
+  "version": "expected_slots_contract_603305_v1",
+  "tz": "Asia/Shanghai",
+  "symbol": "603305",
+  "rules": {
+    "expected_slots_source": "contract/schedule",
+    "forbidden_inference": {
+      "sample_quality": "MUST_NOT_INFER_FROM_EXISTING_REPORTS",
+      "failure_summary": "MUST_NOT_INFER_FROM_EXISTING_REPORTS"
+    },
+    "mandatory_close_snapshot": {
+      "slot": "15:00",
+      "required_report_prefix": "report_YYYYMMDD_150000.txt",
+      "missing_error_code": "MISSING_CLOSE_SNAPSHOT_1500",
+      "policy": "if_missing_mark_missing_do_not_fabricate"
+    }
+  },
+  "notes": [
+    "15:00 close snapshot is a mandatory expected slot even if intraday schedule changes.",
+    "Expected slots must come from contract/schedule (or a maintained expected_slots_YYYYMMDD.json generated from it), not reverse-inferred from existing reports.",
+    "If 15:00 snapshot missing, record MISSING_CLOSE_SNAPSHOT_1500; never fabricate a report."
+  ]
+}

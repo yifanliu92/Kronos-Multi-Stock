@@ -1,0 +1,8 @@
+{
+  "commission_rate_one_way": 0.0001,
+  "stamp_tax_sell_rate": 0.0005,
+  "transfer_fee_rate_sh_rate": 1e-05,
+  "exchange_code": "SH",
+  "base_capital_cny": 100000,
+  "target_net_return_rate": 0.0005
+}

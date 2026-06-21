@@ -74,3 +74,56 @@ venv.bak/
 temp/
 tmp/
 .python-version
+# Kronos local Python environment
+kronos_venv/
+
+# Kronos backups and archives
+backups/
+archive_lightweight_*/
+*.bak
+*.bak.*
+*.bak_*
+
+# Kronos runtime logs and temporary outputs
+local_cron_logs/
+router_logs/
+sim_logs_daily/
+shadow_logs_daily/
+debug/
+health_check_*.txt
+~$*
+
+# macOS local files
+.DS_Store
+# Kronos generated reports and delivery outputs
+chatgpt_handoff/
+cron_delivery_outputs/
+daily_reports/
+guard_outputs/
+outputs/
+strategy_compare_reports/
+review_bundle_*/
+*.tar.gz
+
+# Kronos runtime queues and media
+router_media/
+router_queue/
+task_queue/
+
+# Kronos local runtime data and state
+data/
+deploy_fingerprint_*.txt
+excluded_samples_summary.json
+round_trip_trade_ledger_*.json
+shadow_state_*.json
+shadow_trades_*.jsonl
+sim_state_*.json
+sim_trades_*.jsonl
+
+# Historical working snapshots
+*.ok_*
+*.v1_ok_*
+# Machine-local launch files and embedded credentials
+local_daily_603305.sh
+com.kronos.local_daily_603305.plist
+*.disabled_*

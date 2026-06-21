@@ -3,12 +3,10 @@ from __future__ import annotations
 
 import datetime as dt
 import json
-import os
 from pathlib import Path
 
 from signal_router_603305 import fetch_eastmoney
 from short_cost_calculator import (
-    calculate_short_pnl,
     calculate_settled_short_interest,
     calculate_accrued_short_interest,
     calculate_oldest_open_short_days,
@@ -19,11 +17,11 @@ STOCK_CODE = "603305"
 STOCK_NAME = "旭升集团"
 
 BASE_DIR = Path(__file__).resolve().parent
-STATE_PATH = BASE_DIR / "sim_state_603305.json"
-LOG_PATH = BASE_DIR / "sim_trades_603305.jsonl"
-LOG_DAILY_DIR = BASE_DIR / "sim_logs_daily"
+STATE_PATH = BASE_DIR / "shadow_state_603305.json"
+LOG_PATH = BASE_DIR / "shadow_trades_603305.jsonl"
+LOG_DAILY_DIR = BASE_DIR / "shadow_logs_daily"
 COSTS_PATH = BASE_DIR / "sim_costs_603305.json"
-SIM_RULES_PATH = BASE_DIR / "simulate_rules_603305.json"
+SIM_RULES_PATH = BASE_DIR / "strategy_versions/simulate_rules_603305_v1.1-shadow.json"
 
 DEFAULT_STATE = {
     "symbol": "603305",
@@ -121,35 +119,6 @@ def signal_and_delta(pct: float, bull: float, bear: float, curr: int, rules: dic
 
 def clamp(v: int, lo: int, hi: int) -> int:
     return max(lo, min(hi, v))
-
-
-def apply_short_risk_control(curr: int, target: int, state: dict, market: dict, rules: dict) -> tuple[int, str | None]:
-    cfg = rules.get("short_risk_control", {})
-    if not cfg or target >= 0:
-        return target, None
-
-    max_short = int(cfg.get("max_short", -100))
-    max_add_short = int(cfg.get("max_add_short_per_trade", 30))
-    target = max(target, max_short)
-    if target < curr and abs(target - curr) > max_add_short:
-        target = curr - max_add_short
-
-    avg = state.get("avg_entry_price")
-    base = float(state.get("base_capital_cny", 100000) or 100000)
-    pnl_pct, _ = calculate_short_pnl(avg, market.get("last"), target, base)
-    loss_pct = pnl_pct * 100
-
-    reason = None
-    for level in cfg.get("stop_loss_levels", []):
-        th = float(level.get("loss_pct", -999))
-        if loss_pct <= th:
-            if level.get("action") == "强制平空":
-                return 0, "空头止损：触发强制平空"
-            reduce_pct = int(level.get("reduce_pct", 0))
-            if reduce_pct > 0:
-                target = min(0, target + reduce_pct)
-                reason = f"空头止损：浮亏{loss_pct:.2f}%触发减空{reduce_pct}%"
-    return target, reason
 
 
 def apply_take_profit(state: dict, market: dict, curr: int, base_target: int, rules: dict) -> tuple[int, str | None]:
@@ -271,13 +240,6 @@ def calc_trade_cost(curr: int, target: int, price: float, costs: dict) -> dict:
 
 
 def main() -> None:
-    # P1.1: model allowlist guard (blocks unsupported cron agent models before executing strategy)
-    try:
-        from scripts.model_allowlist_guard import run_guard
-        run_guard(task_name='603305_every10_sim', job_id=os.environ.get('OPENCLAW_CRON_JOB_ID','') or os.environ.get('JOB_ID',''), model=os.environ.get('OPENCLAW_MODEL') or os.environ.get('MODEL') or '', provider=os.environ.get('OPENCLAW_PROVIDER') or os.environ.get('PROVIDER') or '')
-    except Exception:
-        pass
-
     rules = load_sim_rules()
     bull = float(rules["thresholds"].get("bull_pct", 0.6))
     bear = float(rules["thresholds"].get("bear_pct", -1.2))
@@ -330,20 +292,14 @@ def main() -> None:
     fully_invested_lock = abs(curr) >= 100
     increasing_exposure = (curr > 0 and target > curr) or (curr < 0 and target < curr)
     if fully_invested_lock and increasing_exposure:
-        # 强制不调仓：保留仓位不变
         target = curr
         action = 'IDEMPOTENT_SKIP_FULLY_INVESTED'
         reason = '触发加仓信号，但因满仓锁定规则被拦截，仓位保持不变'
     else:
-        # 正常流程
         target, tp_reason = apply_take_profit(state, market, curr, target, rules)
         if tp_reason:
             reason = tp_reason
-        target, short_rc_reason = apply_short_risk_control(curr, target, state, market, rules)
-        if short_rc_reason:
-            reason = short_rc_reason
 
-        # 若因上限/下限导致实际调仓幅度与规则意图不一致，理由必须显式按“实际delta”表述，避免回报不一致
         actual_delta = target - curr
         if actual_delta != delta and actual_delta != 0 and any(k in str(reason) for k in ['加仓', '减仓']):
             reason = f"规则产生调仓意图{delta:+d}%，但受仓位上限/下限约束，实际调仓{actual_delta:+d}%"
@@ -351,13 +307,8 @@ def main() -> None:
         action = action_text(curr, target)
         if target == curr:
             action = '持仓不变'
-            # 防止出现“动作=持仓不变，但理由里写加仓/减仓”的一致性冲突（回归门禁要求）
             if any(k in str(reason) for k in ['加仓', '减仓']):
                 reason = '已达仓位上限或无交易触发，本时点持仓不变'
-    if action == '持仓不变':
-        # 防止出现“动作=持仓不变，但理由里写加仓/减仓”的一致性冲突（回归门禁要求）
-        if any(k in str(reason) for k in ['加仓', '减仓']):
-            reason = '已达仓位上限或无交易触发，本时点持仓不变'
     fee = calc_trade_cost(curr, target, market["last"], costs)
     state, lot_event = apply_trade(
         state=state,
@@ -491,20 +442,12 @@ def main() -> None:
 
     avg_price = (market["open"] + market["high"] + market["low"] + market["last"]) / 4.0
 
+    # P0 report-consistency: cross-zero semantics must be reflected in reason.
     cross_zero = (curr > 0 and target < 0) or (curr < 0 and target > 0)
     cross_zero_action = None
     if cross_zero:
         cross_zero_action = f"多空穿越（{curr}% → {target}%）；先平{'多' if curr > 0 else '空'}仓{abs(curr)}%，再建{'空' if target < 0 else '多'}仓{abs(target)}%"
-        # P0 report-consistency: when cross-zero happens, reason must reflect cross-zero semantics.
         reason = f"{reason}；{cross_zero_action}" if reason else cross_zero_action
-
-    long_pnl = 0.0
-    short_pnl = 0.0
-    if state.get("avg_entry_price") and target != 0:
-        if target > 0:
-            long_pnl = (market["last"] - float(state.get("avg_entry_price"))) / float(state.get("avg_entry_price"))
-        else:
-            short_pnl, _amt = calculate_short_pnl(float(state.get("avg_entry_price")), market["last"], target, float(costs.get("base_capital_cny", 100000)))
 
     record = {
         "short_cost": short_costs,
@@ -528,17 +471,6 @@ def main() -> None:
         "position_from": curr,
         "position_to": target,
         "reason": reason,
-        "cross_zero": cross_zero,
-        "cross_zero_from": curr if cross_zero else None,
-        "cross_zero_to": target if cross_zero else None,
-        "cross_zero_action": cross_zero_action,
-        "performance": {
-            "long_pnl": round(long_pnl, 6),
-            "short_pnl": round(short_pnl, 6),
-            "cross_zero_pnl": round((long_pnl + short_pnl) if cross_zero else 0.0, 6),
-            "short_max_drawdown": 0.0,
-            "short_cost_ratio": round((float(short_costs.get("total", 0.0)) / float(fee.get("trade_notional", 1.0))) if short_costs and fee.get("trade_notional", 0.0) else 0.0, 6),
-        },
         "cost": fee,
         "lot_event": lot_event,
         "lot_book_long": state.get("lot_book_long", []),

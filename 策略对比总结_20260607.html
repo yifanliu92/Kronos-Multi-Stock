@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Kronos 三层策略对比总结</title>
+<style>
+body { font-family: -apple-system, sans-serif; padding: 24px; max-width: 900px; margin: 0 auto; }
+h1 { font-size: 22px; margin-bottom: 4px; }
+h2 { font-size: 18px; margin-top: 28px; margin-bottom: 8px; }
+p { color: #555; font-size: 14px; margin-top: 0; }
+table { border-collapse: collapse; width: 100%; margin-bottom: 24px; }
+th, td { border: 1px solid #ccc; padding: 8px 10px; text-align: left; font-size: 14px; }
+th { background-color: #f0f0f0; font-weight: 600; }
+.tag-green { color: #2e7d32; background: #e8f5e9; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+.tag-yellow { color: #f57f17; background: #fff8e1; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+.tag-red { color: #c62828; background: #ffebee; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+.check { color: #2e7d32; }
+.cross { color: #c62828; }
+.section-desc { background: #fafafa; padding: 12px; border-left: 4px solid #ccc; margin-bottom: 16px; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<h1>Kronos 三层策略对比总结</h1>
+<p>生成时间：2026-06-07 17:50 &nbsp;|&nbsp; 版本：v2（含 factor_score 详解）</p>
+
+<!-- ===== 一、概览 ===== -->
+<h2>一、三层概览</h2>
+<table>
+<tr><th>层</th><th>名称</th><th>状态</th><th>功能</th></tr>
+<tr><td>① 主策略</td><td><code>simulate_rules_603305</code></td><td><span class="tag-green">🟢 每天在跑</span></td><td>当前正在执行的策略，每10分钟推送</td></tr>
+<tr><td>② 影子 v1.1</td><td><code>v1.1-shadow</code></td><td><span class="tag-green">🟢 每天在跑</span></td><td>主策略的对照组，参数已优化</td></tr>
+<tr><td>③ Candidate-A</td><td><code>candidate_A_replay.py</code></td><td><span class="tag-yellow">🟡 写好了等样本</span></td><td>观察"两次确认才开仓"的效果</td></tr>
+</table>
+
+<!-- ===== 二、核心逻辑 ===== -->
+<h2>二、核心逻辑对比</h2>
+<table>
+<tr><th>对比项</th><th>主策略</th><th>影子 v1.1-shadow</th><th>Candidate-A</th></tr>
+<tr>
+  <td>是否盘中执行</td>
+  <td><span class="check">✅</span> 每10分钟自动跑</td>
+  <td><span class="check">✅</span> 每10分钟自动跑</td>
+  <td><span class="cross">❌</span> 离线跑，不接入盘中</td>
+</tr>
+<tr>
+  <td>是否影响交易</td>
+  <td><span class="check">✅</span> 是</td>
+  <td><span class="check">✅</span> 是</td>
+  <td><span class="cross">❌</span> 绝不，observer-only</td>
+</tr>
+<tr>
+  <td>信号来源</td>
+  <td>实时行情 + factor_score</td>
+  <td>实时行情 + factor_score</td>
+  <td>读主策略已产生的历史标签</td>
+</tr>
+<tr>
+  <td>核心规则</td>
+  <td>有信号就动</td>
+  <td>日内化参数 + 分级止盈</td>
+  <td>连续两次同方向信号才动作</td>
+</tr>
+<tr>
+  <td>当前状态</td>
+  <td><span class="tag-green">🟢 生产中</span></td>
+  <td><span class="tag-green">🟢 生产中</span></td>
+  <td><span class="tag-yellow">🟡 等 A/B 档≥10 天</span></td>
+</tr>
+</table>
+
+<!-- ===== 三、开仓逻辑 ===== -->
+<h2>三、开仓逻辑</h2>
+<table>
+<tr><th>对比项</th><th>主策略</th><th>影子 v1.1-shadow</th><th>Candidate-A</th></tr>
+<tr>
+  <td>是否需确认才开仓</td>
+  <td><span class="cross">❌</span> 有信号立即加仓</td>
+  <td><span class="cross">❌</span> 有信号立即加仓</td>
+  <td><span class="check">✅</span> 连续两次同方向才加</td>
+</tr>
+<tr>
+  <td>开仓/加仓阈值</td>
+  <td>原值</td>
+  <td>日内化调整（更敏感）</td>
+  <td>不定义新阈值，读主策略标签</td>
+</tr>
+<tr>
+  <td>每次最大调整</td>
+  <td>20%</td>
+  <td>20%</td>
+  <td>20%</td>
+</tr>
+</table>
+
+<!-- ===== 四、退出逻辑 ===== -->
+<h2>四、退出逻辑</h2>
+<table>
+<tr><th>对比项</th><th>主策略</th><th>影子 v1.1-shadow</th><th>Candidate-A</th></tr>
+<tr>
+  <td>减仓/平仓延迟</td>
+  <td><span class="cross">❌</span> 无延迟</td>
+  <td><span class="cross">❌</span> 无延迟</td>
+  <td><span class="cross">❌</span> 无延迟（退出从不加延迟）</td>
+</tr>
+<tr>
+  <td>止盈规则</td>
+  <td>一级止盈</td>
+  <td>分级止盈 15/15/20</td>
+  <td>继承主策略退出规则</td>
+</tr>
+<tr>
+  <td>止损规则</td>
+  <td>标准止损</td>
+  <td>标准止损</td>
+  <td>继承主策略退出规则</td>
+</tr>
+</table>
+
+<!-- ===== 五、资金与成本 ===== -->
+<h2>五、资金与成本</h2>
+<table>
+<tr><th>对比项</th><th>主策略</th><th>影子 v1.1-shadow</th><th>Candidate-A</th></tr>
+<tr>
+  <td>启动资金</td>
+  <td>100,000 元</td>
+  <td>100,000 元</td>
+  <td>继承主策略</td>
+</tr>
+<tr>
+  <td>满仓后规则</td>
+  <td>停止加仓，仅止盈释放</td>
+  <td>停止加仓，仅止盈释放</td>
+  <td>继承主策略</td>
+</tr>
+<tr>
+  <td>成本计算</td>
+  <td><span class="check">✅</span> 全量（佣金+印花+过户+融券）</td>
+  <td><span class="check">✅</span> 全量</td>
+  <td><span class="check">✅</span> 全量</td>
+</tr>
+<tr>
+  <td>融券利息（多头）</td>
+  <td>0</td>
+  <td>0</td>
+  <td>0</td>
+</tr>
+<tr>
+  <td>融券利息（空头）</td>
+  <td>年化 8% / 日计提</td>
+  <td>年化 8% / 日计提</td>
+  <td>年化 8% / 日计提</td>
+</tr>
+</table>
+
+<!-- ===== 六、额外特性 ===== -->
+<h2>六、额外特性</h2>
+<table>
+<tr><th>对比项</th><th>主策略</th><th>影子 v1.1-shadow</th><th>Candidate-A</th></tr>
+<tr>
+  <td>量能确认</td>
+  <td><span class="cross">❌</span> 无</td>
+  <td><span class="check">✅</span> 早盘≥1.25 / 午盘≥1.15</td>
+  <td><span class="cross">❌</span> 不涉及</td>
+</tr>
+<tr>
+  <td>止盈后回补</td>
+  <td><span class="cross">❌</span> 无</td>
+  <td><span class="check">✅</span> 单次+10%，日内最多2次</td>
+  <td><span class="cross">❌</span> 不涉及</td>
+</tr>
+</table>
+
+<!-- ===== 七、Factor Score 详解 ===== -->
+<h2>七、Factor Score — 多因子综合评分</h2>
+
+<div class="section-desc">
+<strong>定义（Definition）：</strong>一个数值（范围 <strong>-100 ~ +100</strong>），综合多个维度告诉你当前 603305 的多空倾向。<br>
+<strong>-100 ← 极度看空 &nbsp;&nbsp;|&nbsp;&nbsp; 0 = 中性 &nbsp;&nbsp;|&nbsp;&nbsp; +100 = 极度看多 →</strong>
+</div>
+
+<h3>7.1 因子分类</h3>
+<table>
+<tr><th>类别<br><span style="font-weight:normal;color:#666;">Category</span></th><th>因子<br><span style="font-weight:normal;color:#666;">Factor</span></th><th>作用<br><span style="font-weight:normal;color:#666;">Description</span></th></tr>
+<tr>
+  <td rowspan="3">技术面（判断时机）<br><span style="font-weight:normal;color:#666;font-size:12px;">Technical</span></td>
+  <td>涨跌幅偏离<br><span style="font-weight:normal;color:#666;font-size:12px;">Price Deviation</span></td>
+  <td>当前涨跌幅与近5日均值的偏离程度。偏离过大可能均值回归</td>
+</tr>
+<tr><td>日内动量<br><span style="font-weight:normal;color:#666;font-size:12px;">Intraday Momentum</span></td><td>本时段内价差变化方向。持续向上→加分，向下→减分</td></tr>
+<tr><td>成交量能<br><span style="font-weight:normal;color:#666;font-size:12px;">Volume Ratio</span></td><td>当前成交量与同时段历史均量的比值。放量配合方向更可信</td></tr>
+<tr>
+  <td rowspan="2">趋势类（判断方向）<br><span style="font-weight:normal;color:#666;font-size:12px;">Trend</span></td>
+  <td>短期均线斜率<br><span style="font-weight:normal;color:#666;font-size:12px;">MA Slope</span></td>
+  <td>5分钟 / 10分钟均线的走向。斜率向上→加分，向下→减分</td>
+</tr>
+<tr><td>开盘偏离度<br><span style="font-weight:normal;color:#666;font-size:12px;">Open Deviation</span></td><td>当前价格相对开盘价的位置。高开回落可能减分</td></tr>
+<tr>
+  <td>情绪类（辅助过滤）<br><span style="font-weight:normal;color:#666;font-size:12px;">Sentiment / Filter</span></td>
+  <td>振幅异常<br><span style="font-weight:normal;color:#666;font-size:12px;">Amplitude Anomaly</span></td>
+  <td>振幅过大但价格未动→怀疑虚假信号，降低评分置信度</td></tr>
+<tr>
+  <td rowspan="2">风控类（阻止错误开仓）<br><span style="font-weight:normal;color:#666;font-size:12px;">Risk Control</span></td>
+  <td>仓位饱和度<br><span style="font-weight:normal;color:#666;font-size:12px;">Position Saturation</span></td>
+  <td>满仓时因子强制回到中性附近，阻止追加</td></tr>
+<tr><td>连续方向一致性<br><span style="font-weight:normal;color:#666;font-size:12px;">Direction Consistency</span></td><td>连续同向加仓后自动降级，防止追高/追低</td></tr>
+</table>
+
+<h3>7.2 三种权重模式</h3>
+<table>
+<tr><th>模式<br><span style="font-weight:normal;color:#666;font-size:12px;">Mode</span></th><th>文件<br><span style="font-weight:normal;color:#666;font-size:12px;">Config</span></th><th>特点<br><span style="font-weight:normal;color:#666;font-size:12px;">Characteristics</span></th><th>用途<br><span style="font-weight:normal;color:#666;font-size:12px;">Usage</span></th></tr>
+<tr>
+  <td>保守<br><span style="font-weight:normal;color:#666;font-size:12px;">Conservative</span></td>
+  <td><code>factor_weights.json</code> → conservative</td>
+  <td>风控因子权重高，信号延迟大</td>
+  <td>当前默认观察模式</td>
+</tr>
+<tr>
+  <td>中性<br><span style="font-weight:normal;color:#666;font-size:12px;">Neutral</span></td>
+  <td><code>factor_weights.json</code> → neutral</td>
+  <td>各因子均衡，最常规配置</td>
+  <td>备用对比</td>
+</tr>
+<tr>
+  <td>激进观察<br><span style="font-weight:normal;color:#666;font-size:12px;">Aggressive Observer</span></td>
+  <td><code>factor_weights.json</code> → aggressive_observer</td>
+  <td>趋势因子权重高，反应更快</td>
+  <td>仅观察，不进入任何交易逻辑</td>
+</tr>
+</table>
+
+<p>三种模式各因子权重之和均为 1.0。当前仅 conservative 模式在运行。未来积累够样本后，可对比三种模式的历史表现。</p>
+
+<h3>7.3 盘中的输出形式</h3>
+<p>在你收到的每10分钟推送里，你会看到这样一行：</p>
+<pre style="background:#f5f5f5;padding:10px;border-radius:4px;font-size:13px;">
+[FACTOR_OBSERVER] 因子评分 / Factor Score = +32.5（偏多方向 / Bullish, observer_only=true）
+</pre>
+<ul>
+  <li><strong>+32.5</strong> = 当前综合倾向偏多，但不强烈</li>
+  <li><strong>observer_only=true</strong> = 这个数值只供观察，<span class="cross"><strong>不影响任何交易动作</strong></span></li>
+  <li><strong>不影响</strong>主策略的 action / reason / position_pct</li>
+  <li><strong>不影响</strong>影子策略的买卖信号</li>
+  <li>如果因子数据抓取失败，输出 <code>unavailable</code>，不阻断主/影回报</li>
+</ul>
+
+<h3>7.4 当前限制（牢记）<br><span style="font-weight:normal;color:#666;font-size:14px;">Current Limitations</span></h3>
+<ol>
+  <li><strong>权重是业务经验设定的，尚未被数据验证。</strong>当前值来自"我觉得这个因子应该占多少"，不是"历史数据证明该因子贡献了利润的百分比"。需要积累 A/B 档样本来做回溯验证。</li>
+  <li><strong>因子评分不入交易层。</strong>未来是否进入下一版策略（如 Candidate-A2），取决于 A/B 档≥20 天后的统计结果。</li>
+  <li><strong>小盘股上部分因子效果存疑。</strong>例如"开盘偏离度"在 603305 上经常高开低走或低开高走，预测力需要验证。</li>
+</ol>
+
+<h3>7.5 历史观察计划<br><span style="font-weight:normal;color:#666;font-size:14px;">Historical Observation Plan</span></h3>
+<table>
+<tr><th>指标<br><span style="font-weight:normal;color:#666;font-size:12px;">Metric</span></th><th>说明<br><span style="font-weight:normal;color:#666;font-size:12px;">Description</span></th><th>提取方式<br><span style="font-weight:normal;color:#666;font-size:12px;">Source</span></th></tr>
+<tr><td>factor_score_at_entry<br><span style="font-weight:normal;color:#666;font-size:12px;">开仓时评分</span></td><td>每笔开仓时的因子评分</td><td>从历史报告文本提取</td></tr>
+<tr><td>factor_score_at_exit<br><span style="font-weight:normal;color:#666;font-size:12px;">平仓时评分</span></td><td>每笔平仓时的因子评分</td><td>从历史报告文本提取</td></tr>
+<tr><td>factor_score vs 10/20/30 min return<br><span style="font-weight:normal;color:#666;font-size:12px;">评分 vs 未来收益</span></td><td>因子评分对未来收益的解释力</td><td>由 candidate_A_daily_stats.py 输出</td></tr>
+</table>
+<p>当前样本不足，暂不跑这个统计。等 A/B 档≥10 天后再运行。</p>
+
+<!-- ===== 八、样本门禁 ===== -->
+<h2>八、样本门禁</h2>
+<table>
+<tr><th>样本类型</th><th>核心统计</th><th>敏感性分析</th><th>完全排除</th></tr>
+<tr><td>A/B + auto_cron<br><span style="font-weight:normal;color:#666;font-size:12px;">A/B 档 + 自动触发报告</span></td><td><span class="check">✅</span> 正式统计</td><td><span class="check">✅</span></td><td><span class="cross">❌</span></td></tr>
+<tr><td>A/B + manual_triggered<br><span style="font-weight:normal;color:#666;font-size:12px;">A/B 档 + 手动触发报告</span></td><td><span class="cross">❌</span></td><td><span class="check">✅</span> 单独展示</td><td><span class="cross">❌</span></td></tr>
+<tr><td>C/D + auto_cron<br><span style="font-weight:normal;color:#666;font-size:12px;">C/D 档 + 自动触发报告</span></td><td><span class="cross">❌</span></td><td><span class="cross">❌</span></td><td><span class="check">✅</span></td></tr>
+<tr><td>C/D + manual_triggered<br><span style="font-weight:normal;color:#666;font-size:12px;">C/D 档 + 手动触发报告</span></td><td><span class="cross">❌</span></td><td><span class="cross">❌</span></td><td><span class="check">✅</span></td></tr>
+<tr><td>SKIP / REPORT_INCONSISTENT / 超时<br><span style="font-weight:normal;color:#666;font-size:12px;">跳过 / 报告不一致 / 超时（Timeout）</span></td><td><span class="cross">❌</span></td><td><span class="cross">❌</span></td><td><span class="check">✅</span> 计入排除摘要</td></tr>
+</table>
+
+<!-- ===== 九、晋升条件 ===== -->
+<h2>九、晋升条件：Candidate-A → 下一版策略</h2>
+<p>Candidate-A 若要晋升为下一版策略（Candidate-A2），需同时满足 5 项条件：</p>
+<ol>
+  <li><span class="check">✅</span> round_trip_win_rate 提升（相比主策略）</li>
+  <li><span class="check">✅</span> avg_net_spread_pct 改善</li>
+  <li><span class="check">✅</span> profit_factor 提升</li>
+  <li><span class="check">✅</span> transaction_cost 降低</li>
+  <li><span class="check">✅</span> max_drawdown 不恶化</li>
+</ol>
+<p>三项同时满足 → 进入 Phase 3 参数优化讨论。</p>
+
+<!-- ===== 十、开发阶段 ===== -->
+<h2>十、当前开发阶段</h2>
+<table>
+<tr><th>Phase</th><th>内容</th><th>状态</th></tr>
+<tr><td>Phase 1</td><td>台账 + Candidate-A 回放 + factor_score 统计</td><td><span class="tag-yellow">🟡 等 A/B 档≥10 天跑验收</span></td></tr>
+<tr><td>Phase 2</td><td>三方比较：baseline / v1.1-shadow / Candidate-A</td><td><span class="tag-yellow">⏳ 等待 Phase 1 完成</span></td></tr>
+<tr><td>Phase 3</td><td>基于台账讨论 DeepSeek 参数优化</td><td><span class="tag-yellow">⏳ 等待 Phase 2 完成</span></td></tr>
+</table>
+
+</body>
+</html>

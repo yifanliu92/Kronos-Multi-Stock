@@ -1,0 +1,78 @@
+{
+  "_comment": "603305 影子策略 v1.1（仅对比，不驱动主策略动作）",
+  "rule_version": "2026-04-30-v1.1-shadow",
+  "thresholds": {
+    "bull_pct": 0.6,
+    "bear_pct": -1.2
+  },
+  "position_management": {
+    "max_long": 100,
+    "max_short": -100,
+    "neutral_when_short_cover_pct": 20,
+    "bull_when_short_cover_pct": 40,
+    "strong_bull_when_short_cover_pct": 40,
+    "strong_bull_when_short_cover_first": true,
+    "forbid_add_short_at_full_short": true
+  },
+  "take_profit": {
+    "enabled": true,
+    "drawdown_levels": [
+      {
+        "drawdown_pct": 0.9,
+        "reduce_pct": 30
+      },
+      {
+        "drawdown_pct": 1.6,
+        "reduce_pct": 30
+      },
+      {
+        "drawdown_pct": 2.2,
+        "reduce_to_floor_pct": 20
+      }
+    ],
+    "profit_levels": [
+      {
+        "profit_pct": 1.2,
+        "reduce_pct": 15
+      },
+      {
+        "profit_pct": 2.0,
+        "reduce_pct": 15
+      },
+      {
+        "profit_pct": 3.0,
+        "reduce_pct": 20
+      }
+    ]
+  },
+  "long_side_actions": {
+    "bull_add_pct": 20,
+    "strong_bull_add_pct": 30
+  },
+  "short_side_actions": {
+    "bear_add_pct": 20,
+    "strong_bear_add_pct": 30
+  },
+  "filters": {
+    "volume_confirm_for_add": {
+      "enabled": true,
+      "lookback_bars": 5,
+      "ratio_gt": 1.2,
+      "apply_to": [
+        "bull",
+        "strong_bull"
+      ],
+      "session_ratio": {
+        "am": 1.25,
+        "pm": 1.15
+      }
+    },
+    "reentry_after_take_profit": {
+      "enabled": true,
+      "reentry_pct": 10,
+      "max_reentries_per_day": 2,
+      "condition": "price_reclaim_near_high_and_volume_confirm"
+    }
+  },
+  "short_interest_rate": 0.1
+}
