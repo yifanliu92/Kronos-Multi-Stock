@@ -1,6 +1,6 @@
-# Kronos-603305
+# Kronos Multi-Stock
 
-面向 A 股代码 **603305** 的多空模拟策略研究系统。
+面向 A 股多标的（最初以 **603305** 为模板）的多空模拟策略研究系统。
 
 本项目基于开源项目 [Kronos](https://github.com/shiyu-coder/Kronos) 进行定制，在 K 线基础模型之外，增加了规则驱动的信号、主/影子策略、模拟仓位、交易成本、风险控制、自动报告、复盘和治理工具。
 
@@ -8,7 +8,7 @@
 
 ## 项目目标
 
-Kronos-603305 不是一条孤立的买卖公式，而是一套可复核的研究流程：
+Kronos Multi-Stock 不是一条孤立的买卖公式，而是一套可复核的研究流程：
 
 ```mermaid
 flowchart LR
@@ -70,7 +70,7 @@ flowchart LR
 ## 文档入口
 
 - [603305纯模拟使用说明](README_603305_SIM.md)
-- [Kronos-603305项目说明书 v1.1](KRONOS_项目说明书_v1.1.md)
+- [Kronos Multi-Stock项目说明书 v1.1](KRONOS_项目说明书_v1.1.md)
 - [中文目录说明](README_ZH_STRUCTURE.md)
 - [策略执行SOP](STRATEGY_SOP_603305_v2026-04-29-v1.md)
 - [参数速查](PARAM_QUICK_REF_603305.md)
@@ -83,8 +83,8 @@ flowchart LR
 ### 1. 获取代码
 
 ```bash
-git clone https://github.com/chohiocn/Kronos-603305.git
-cd Kronos-603305
+git clone https://github.com/yifanliu92/Kronos-Multi-Stock.git
+cd Kronos-Multi-Stock
 ```
 
 ### 2. 创建Python环境
@@ -152,7 +152,7 @@ chmod 600 ~/.config/kronos/telegram.env
 
 ## 与上游Kronos的关系
 
-本仓库是在 [shiyu-coder/Kronos](https://github.com/shiyu-coder/Kronos) 基础上的定制研究项目。上游Kronos提供金融K线基础模型、Tokenizer、预测模型及相关训练与推理能力；本仓库新增的603305策略层、模拟执行、报告和治理工具并非上游项目的官方功能。
+本仓库是在 [shiyu-coder/Kronos](https://github.com/shiyu-coder/Kronos) 基础上的定制研究项目。上游Kronos提供金融K线基础模型、Tokenizer、预测模型及相关训练与推理能力；本仓库新增的多标的策略层（以603305为模板，可扩展到任意A股代码）、模拟执行、报告和治理工具并非上游项目的官方功能。
 
 如需了解基础模型的论文、模型权重和通用预测方法，请访问上游项目。
 
