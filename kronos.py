@@ -134,9 +134,9 @@ def stock_name(code: str) -> str:
 def _patch(text: str, code: str, name: str, stock_dir: Path, exchange: str) -> str:
     """Apply all text substitutions needed to port a script to a new ticker."""
     # Protect any literal BASE_DIR path with a sentinel BEFORE the SRC_CODE
-    # replacement below. BASE_DIR's own path (e.g. ".../Kronos-603305")
+    # replacement below. BASE_DIR's own path (e.g. ".../Kronos-Multi-Stock")
     # contains SRC_CODE as a substring, so replacing SRC_CODE first corrupts
-    # it (".../Kronos-603305" -> ".../Kronos-000001"); the later BASE_DIR ->
+    # it (".../Kronos-Multi-Stock" -> ".../Kronos-000001"); the later BASE_DIR ->
     # stock_dir replace then finds no match and silently leaves a broken
     # hardcoded path pointing outside the per-stock workspace (this is what
     # broke calc_winrate_<code>.py's OUT_DIR for 000001).

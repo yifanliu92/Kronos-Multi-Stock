@@ -95,7 +95,7 @@
 
 ## 7. task_queue + worker --once（强制）
 
-- 目录：`/Users/yifliu/Kronos-603305/task_queue/`
+- 目录：`/Users/yifliu/Kronos-Multi-Stock/task_queue/`
 - 提交：`python3 scripts/kronos_submit_task.py <task_name> "<command>"`（立即返回 task_id，不等待执行）
 - 执行：用户确认后执行一次 `python3 scripts/kronos_task_worker.py --once`（只处理一个 pending 任务，执行完退出）
 - 查询：`python3 scripts/kronos_task_status.py <task_id>`（只读状态文件，不触发长任务）
