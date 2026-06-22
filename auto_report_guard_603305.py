@@ -30,7 +30,7 @@ def _kronos_done_marker_guard_v1():
         if _os.environ.get("KRONOS_NOT_FOR_SAMPLE_QUALITY") == "true":
             return
 
-        out = _Path("/Users/wxo/Desktop/Kronos/guard_outputs")
+        out = _Path("/Users/yifliu/Kronos-603305/guard_outputs")
         if not out.exists():
             return
 
@@ -83,7 +83,7 @@ except Exception:
 # ---- END KRONOS_DONE_MARKER_GUARD_V1 ----
 
 
-BASE = Path('/Users/wxo/Desktop/Kronos')
+BASE = Path('/Users/yifliu/Kronos-603305')
 SIM = BASE / 'simulate_position_603305.py'
 SHADOW_SIM = BASE / 'simulate_position_603305_shadow.py'
 STATE = BASE / 'sim_state_603305.json'

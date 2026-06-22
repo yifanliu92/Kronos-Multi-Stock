@@ -149,7 +149,7 @@
 
 ### 7.2 拉取胜率快照
 执行：
-- `bash /Users/wxo/Desktop/Kronos/run_winrate_603305.sh`
+- `bash /Users/yifliu/Kronos-603305/run_winrate_603305.sh`
 
 输出：
 - `strategy_compare_reports/winrate_603305_*.json`
