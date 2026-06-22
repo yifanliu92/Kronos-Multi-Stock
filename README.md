@@ -74,9 +74,7 @@ python3 kronos.py 603305 simulate
 ### 4. 首次运行前请先阅读
 
 ```text
-README_603305_SIM.md
 KRONOS_项目说明书_v1.1.md
-STRATEGY_SOP_603305_v2026-04-29-v1.md
 ```
 
 不同环境的数据源和状态初始化方式可能不同。请勿在不了解配置和输入数据的情况下，将脚本用于任何真实交易流程。
@@ -137,28 +135,25 @@ flowchart LR
 | 文件或目录 | 用途 |
 | --- | --- |
 | `kronos.py` | 通用多标的 CLI 入口（推荐的主要使用方式） |
-| `stocks/<代码>/` | 除模板标的外，各标的自动生成的独立工作区（脚本、规则、状态） |
+| `stocks/<代码>/` | 各标的独立工作区（脚本、规则、状态），包括模板标的本身 |
 | `dashboard.html` | `dashboard html` 命令生成的跨标的汇总看板 |
-| `simulate_position_603305.py` | 模板标的（603305）主策略模拟执行 |
-| `simulate_position_603305_shadow.py` | 模板标的影子策略模拟执行 |
-| `auto_report_guard_603305.py` | 模板标的主/影统一执行、格式化和一致性检查 |
-| `sim_review_603305.py` | 模板标的收盘复盘 |
-| `simulate_rules_603305.json` | 模板标的主策略规则参数 |
-| `signal_rules_603305.json` | 信号阈值与文案规则 |
+| `stocks/603305/simulate_position_603305.py` | 模板标的（603305）主策略模拟执行 |
+| `stocks/603305/simulate_position_603305_shadow.py` | 模板标的影子策略模拟执行 |
+| `stocks/603305/auto_report_guard_603305.py` | 模板标的主/影统一执行、格式化和一致性检查 |
+| `stocks/603305/sim_review_603305.py` | 模板标的收盘复盘 |
+| `stocks/603305/simulate_rules_603305.json` | 模板标的主策略规则参数 |
+| `stocks/603305/signal_rules_603305.json` | 信号阈值与文案规则 |
 | `strategy_versions/` | 影子策略规则及版本记录 |
 | `scripts/` | 自动运行、复盘、校验和治理工具 |
 | `config/` | 交易日历、因子权重和时点约束 |
 | `audit/` | 审计与验证记录 |
+| `legacy/` | 单标的时代遗留的脚本与文档（已停用，仅作存档） |
 
-> 603305 是新增标的复制改写的**模板**：`kronos.py` 首次对一个新代码执行命令时，会把上述模板文件复制到 `stocks/<代码>/` 并自动替换代码、名称、交易所相关字段。
+> 603305 是新增标的复制改写的**模板**：`kronos.py` 首次对一个新代码执行命令时，会把 `stocks/603305/` 下的模板文件复制到 `stocks/<代码>/` 并自动替换代码、名称、交易所相关字段。`stocks/` 下其它各标的工作区均为自动生成、不纳入版本控制；`stocks/603305/` 例外，因为它本身就是版本化的模板源码。
 
 ## 文档入口
 
-- [603305纯模拟使用说明](README_603305_SIM.md)
 - [Kronos Multi-Stock项目说明书 v1.1](KRONOS_项目说明书_v1.1.md)
-- [中文目录说明](README_ZH_STRUCTURE.md)
-- [策略执行SOP](STRATEGY_SOP_603305_v2026-04-29-v1.md)
-- [参数速查](PARAM_QUICK_REF_603305.md)
 - [系统契约](KRONOS_SYSTEM_CONTRACT.md)
 - [治理基线](KRONOS_GOVERNANCE_BASELINE_v0.3.md)
 - [速率限制策略](KRONOS_RATE_LIMIT_POLICY.md)

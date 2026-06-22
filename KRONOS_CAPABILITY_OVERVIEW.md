@@ -26,9 +26,8 @@
 - 行情抓取与解析、失败降级、provider 字段标准化透出。
 
 **文件路径**
-- 主要抓取/路由：`/Users/wxo/Desktop/Kronos/signal_router_603305.py`
-- 诊断脚本：`/Users/wxo/.openclaw/workspace/scripts/diagnose_quote_sources.sh`
--（若存在）主/影模拟脚本会在日志中记录 provider 字段：`/Users/wxo/Desktop/Kronos/simulate_position_603305.py`、`/Users/wxo/Desktop/Kronos/simulate_position_603305_shadow.py`
+- 主要抓取/路由：`stocks/603305/signal_router_603305.py`
+- 主/影模拟脚本会在日志中记录 provider 字段：`stocks/603305/simulate_position_603305.py`、`stocks/603305/simulate_position_603305_shadow.py`
 
 **当前状态（按你要求补齐“腾讯兜底状态”）**
 - 当前是否只用 Eastmoney：**是**（当前执行口径为 Eastmoney 单源；不再把 Sina 当作生产兜底）。
@@ -81,8 +80,8 @@
 - 报告结构一致性检查、满仓锁定（full_lock）硬拦截、一致性降级、错误码透出。
 
 **文件路径**
-- 报告守卫：`/Users/wxo/Desktop/Kronos/auto_report_guard_603305.py`
-- 回归脚本：`/Users/wxo/Desktop/Kronos/scripts/run_kronos_regression.sh`
+- 报告守卫：`stocks/603305/auto_report_guard_603305.py`
+- 回归脚本：`scripts/run_kronos_regression.sh`
 
 **当前状态（按你要求降级表述）**
 - **“部分自愈/自动降级/人工确认闭环”**：

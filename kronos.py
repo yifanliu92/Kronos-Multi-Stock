@@ -25,6 +25,9 @@ CACHE_PATH = BASE_DIR / ".stock_name_cache.json"
 # ── Source ticker (template) ───────────────────────────────────────────────────
 SRC_CODE = "603305"
 SRC_NAME = "旭升集团"
+# SRC_CODE's own workspace (stocks/603305/) doubles as the template that every
+# new ticker is copied and patched from.
+TEMPLATE_DIR = STOCKS_DIR / SRC_CODE
 
 HELP_TEXT = """
 Kronos — A-share simulation CLI
@@ -166,27 +169,18 @@ def _patch(text: str, code: str, name: str, stock_dir: Path, exchange: str) -> s
 
 
 def workspace_dir(code: str) -> Path:
-    """
-    Root-level dir for the source ticker (its scripts/state already live
-    there) — per-ticker subdir under stocks/ for everything else. Without
-    this, the source ticker would get re-scaffolded into stocks/<SRC_CODE>/
-    as a second, diverging copy of itself with its own independent state.
-    """
-    return BASE_DIR if code == SRC_CODE else STOCKS_DIR / code
+    """Per-ticker workspace dir under stocks/. SRC_CODE lives there too
+    (stocks/603305/), like any other tracked code — it's the template
+    that new tickers are copied and patched from, not a special case."""
+    return STOCKS_DIR / code
 
 
 def ensure_stock_workspace(code: str) -> Path:
     """
     First call: scaffold a per-stock workspace by copying and patching
-    all template scripts from the SRC_CODE originals.
+    all template scripts from the SRC_CODE originals (stocks/603305/).
     Subsequent calls: return the existing directory immediately.
-    SRC_CODE itself is never scaffolded — its scripts/state already live
-    at BASE_DIR, and scaffolding it would create a duplicate, diverging
-    copy of the real tracked position.
     """
-    if code == SRC_CODE:
-        return BASE_DIR
-
     stock_dir = STOCKS_DIR / code
     if stock_dir.exists():
         return stock_dir
@@ -209,7 +203,7 @@ def ensure_stock_workspace(code: str) -> Path:
         "short_cost_calculator.py":                "short_cost_calculator.py",
     }
     for src_name, dst_name in script_map.items():
-        src = BASE_DIR / src_name
+        src = TEMPLATE_DIR / src_name
         if not src.exists():
             continue
         text = _patch(src.read_text(encoding="utf-8"), code, name, stock_dir, exchange)
@@ -219,7 +213,7 @@ def ensure_stock_workspace(code: str) -> Path:
     # (e.g. lot_ledger_603305.py -> lot_ledger_000001.py), otherwise cross-imports
     # inside the patched content (which now reference the new module name) fail
     # to resolve because the file on disk still has the old SRC_CODE name.
-    scripts_src = BASE_DIR / "scripts"
+    scripts_src = TEMPLATE_DIR / "scripts"
     if scripts_src.exists():
         shutil.copytree(scripts_src, stock_dir / "scripts", dirs_exist_ok=True)
         for py in list((stock_dir / "scripts").glob("*.py")):
@@ -239,7 +233,7 @@ def ensure_stock_workspace(code: str) -> Path:
         f"sim_costs_{SRC_CODE}.json":      f"sim_costs_{code}.json",
     }
     for src_name, dst_name in json_map.items():
-        src = BASE_DIR / src_name
+        src = TEMPLATE_DIR / src_name
         if not src.exists():
             continue
         try:
@@ -257,12 +251,11 @@ def ensure_stock_workspace(code: str) -> Path:
 
 
 def tracked_codes() -> list[str]:
-    """All tracked ticker codes, SRC_CODE first (its state lives at BASE_DIR,
-    not under stocks/, so it isn't picked up by the STOCKS_DIR scan below)."""
-    codes = [SRC_CODE]
-    if STOCKS_DIR.exists():
-        codes += sorted(d.name for d in STOCKS_DIR.iterdir() if d.is_dir() and d.name != SRC_CODE)
-    return codes
+    """All tracked ticker codes (each one's workspace, including the
+    template SRC_CODE, lives under stocks/)."""
+    if not STOCKS_DIR.exists():
+        return []
+    return sorted(d.name for d in STOCKS_DIR.iterdir() if d.is_dir())
 
 
 def load_trade_records(code: str) -> list[dict]:
@@ -376,7 +369,7 @@ def cmd_reset(code: str) -> None:
 def cmd_stocks() -> None:
     codes = tracked_codes()
 
-    if len(codes) == 1 and not (BASE_DIR / f"sim_state_{SRC_CODE}.json").exists():
+    if not codes:
         print("[Kronos] No stocks tracked yet. Run '<code> simulate' to start.")
         return
 
@@ -416,7 +409,7 @@ def cmd_add_watchlist(codes_raw: str) -> None:
         if not (code.isdigit() and len(code) == 6):
             invalid.append(code)
             continue
-        was_tracked = code == SRC_CODE or (STOCKS_DIR / code).exists()
+        was_tracked = (STOCKS_DIR / code).exists()
         ensure_stock_workspace(code)
         (already if was_tracked else added).append(code)
 

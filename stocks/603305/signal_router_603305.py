@@ -68,7 +68,7 @@ def _extract_json_text(txt: str) -> Optional[str]:
 
 def _dump_raw(raw: str) -> None:
     ts = dt.datetime.now().strftime("%Y%m%d_%H%M%S")
-    d = Path("/Users/yifliu/Kronos-Multi-Stock/debug"); d.mkdir(parents=True, exist_ok=True)
+    d = Path(__file__).resolve().parent / "debug"; d.mkdir(parents=True, exist_ok=True)
     (d / f"eastmoney_raw_{ts}.txt").write_text(raw or "", encoding="utf-8")
 
 

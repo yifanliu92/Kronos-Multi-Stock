@@ -1,14 +1,8 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-import json
 from datetime import datetime
-from pathlib import Path
 from typing import Any, Dict, List, Tuple
-
-BASE = Path('/Users/wxo/Desktop/Kronos')
-MAIN_STATE = BASE / 'sim_state_603305.json'
-SHADOW_STATE = BASE / 'shadow_state_603305.json'
 
 
 def _new_id(prefix: str) -> str:

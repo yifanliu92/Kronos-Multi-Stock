@@ -40,14 +40,13 @@
 4. 因子策略门槛（如涉及）：仍需满足 observer-only 升级条件并经用户确认
 
 ## 当前关键文件清单
-- `/Users/wxo/Desktop/Kronos/KRONOS_SYSTEM_CONTRACT.md`
-- `/Users/wxo/Desktop/Kronos/KRONOS_GOVERNANCE_BASELINE_v0.3.md`
-- `/Users/wxo/Desktop/Kronos/scripts/run_kronos_regression.sh`
-- `/Users/wxo/Desktop/Kronos/signal_router_603305.py`
-- `/Users/wxo/Desktop/Kronos/simulate_position_603305.py`
-- `/Users/wxo/Desktop/Kronos/simulate_position_603305_shadow.py`
-- `/Users/wxo/Desktop/Kronos/scripts/factor_observer_603305.py`
-- `/Users/wxo/Desktop/Kronos/scripts/factor_observer_5d_review.py`
+- `KRONOS_SYSTEM_CONTRACT.md`
+- `KRONOS_GOVERNANCE_BASELINE_v0.3.md`
+- `scripts/run_kronos_regression.sh`
+- `stocks/603305/signal_router_603305.py`
+- `stocks/603305/simulate_position_603305.py`
+- `stocks/603305/simulate_position_603305_shadow.py`
+- `scripts/factor_observer_5d_review.py`
 
 ## 最近一次回归日志
 - `/Users/wxo/Desktop/Kronos/guard_outputs/regression_20260521_000637.log`

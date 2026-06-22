@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 from datetime import datetime
 
-BASE = Path('/Users/yifliu/Kronos-Multi-Stock')
+BASE = Path(__file__).resolve().parent.parent
 MAIN_LOG = BASE / 'sim_trades_603305.jsonl'
 SHADOW_LOG = BASE / 'shadow_trades_603305.jsonl'
 OUT_DIR = BASE / 'strategy_compare_reports'

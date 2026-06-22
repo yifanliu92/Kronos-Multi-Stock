@@ -45,42 +45,45 @@
 
 ## 2. 目录与关键文件
 
+> 603305 是 `kronos.py` 的**模板标的**，文件全部位于 `stocks/603305/`（与其它标的同构）。所有操作统一通过
+> `python kronos.py 603305 <命令>` 执行（如 `simulate`、`shadow`、`review`、`winrate`），不再使用旧的根目录脚本
+> 或独立 `.sh` 包装器（已归档至 `legacy/`）。
+
 ### 2.1 策略与执行
 
-- `simulate_position_603305.py`  
-  主策略执行脚本（盘中自动触发）。
+- `stocks/603305/simulate_position_603305.py`  
+  主策略执行脚本（盘中自动触发，由 `kronos.py 603305 simulate` 调用）。
 
-- `simulate_position_603305_shadow.py`  
-  影子策略执行脚本（与主策略同触发时点并行执行）。
+- `stocks/603305/simulate_position_603305_shadow.py`  
+  影子策略执行脚本（与主策略同触发时点并行执行，由 `kronos.py 603305 shadow` 调用）。
 
-- `auto_report_guard_603305.py`  
+- `stocks/603305/auto_report_guard_603305.py`  
   统一执行与回报入口：
   - 同时执行主/影子脚本；
   - 汇总格式化输出；
   - 做模板与一致性校验；
   - 失败时返回错误信息。
 
-- `sim_review_603305.py`  
-  15:00 收盘复盘脚本。
+- `stocks/603305/sim_review_603305.py`  
+  15:00 收盘复盘脚本（由 `kronos.py 603305 review` 调用）。
 
 ### 2.2 状态与日志
 
-- `sim_state_603305.json`：主策略当前状态（仓位、均价、成本等）
-- `shadow_state_603305.json`：影子策略当前状态
-- `sim_trades_603305.jsonl`：主策略交易流水
-- `shadow_trades_603305.jsonl`：影子策略交易流水
+- `stocks/603305/sim_state_603305.json`：主策略当前状态（仓位、均价、成本等）
+- `stocks/603305/shadow_state_603305.json`：影子策略当前状态
+- `stocks/603305/sim_trades_603305.jsonl`：主策略交易流水
+- `stocks/603305/shadow_trades_603305.jsonl`：影子策略交易流水
 - `guard_outputs/`：统一回报输出与校验结果归档
 
 ### 2.3 规则与版本
 
-- `simulate_rules_603305.json`：主策略规则
+- `stocks/603305/simulate_rules_603305.json`：主策略规则
 - `strategy_versions/simulate_rules_603305_v1.1-shadow.json`：影子策略规则
-- `signal_rules_603305.json`：信号阈值与文案规则
+- `stocks/603305/signal_rules_603305.json`：信号阈值与文案规则
 
 ### 2.4 胜率与对比
 
-- `scripts/calc_winrate_603305.py`：胜率快照统计脚本
-- `run_winrate_603305.sh`：一键执行胜率统计
+- `stocks/603305/scripts/calc_winrate_603305.py`：胜率快照统计脚本（由 `kronos.py 603305 winrate` 调用）
 - `strategy_compare_reports/`：策略对比报告输出目录
 
 ---
